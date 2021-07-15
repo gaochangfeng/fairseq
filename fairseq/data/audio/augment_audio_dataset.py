@@ -100,12 +100,13 @@ class AugmentCenter(object):
             noise = self.read_wav(noise)
             noise = noise/numpy.sqrt((noise ** 2).mean())            
             diff = abs(len(x) - len(noise))
-            offset = self.state.randint(0, diff)
-            if len(noise) > len(x):
-                # Truncate noise
-                noise = noise[offset : -(diff - offset)]
-            else:
-                noise = numpy.pad(noise, pad_width=[offset, diff - offset], mode="wrap")
+            if diff != 0:
+                offset = self.state.randint(0, diff)
+                if len(noise) > len(x):
+                    # Truncate noise
+                    noise = noise[offset : -(diff - offset)]
+                else:
+                    noise = numpy.pad(noise, pad_width=[offset, diff - offset], mode="wrap")
             
         ratio = self.state.uniform(lower, upper)
         if dbunit:
@@ -144,7 +145,11 @@ class AugmentCenter(object):
 
     def voice_noarm(self, x):
         return x / x.max() * 0.3
-
+        
+    def resample(self, x, middle=8000):
+        x = librosa.resample(x, self.sample_rate, middle, res_type="kaiser_fast")
+        x = librosa.resample(x, middle, self.sample_rate, res_type="kaiser_fast")
+        return x
 
 class AugmentFileAudioDataset(FileAudioDataset):
     def __init__(
@@ -189,9 +194,9 @@ class AugmentFileAudioDataset(FileAudioDataset):
         for i,wav in enumerate(raw_wavs.numpy()):
             aug_wav = self.augment_center.voice_preturb_dynamic(wav, -20, 20, dbunit=True)
             aug_wav = self.augment_center.frequence_preturb_dynamic(aug_wav, -20, 20, dbunit=True)
-            aug_wav = self.augment_center.frequence_shift(aug_wav)
-            aug_wav = self.augment_center.fair_filed(aug_wav)
-            aug_wav = self.augment_center.random_noise(aug_wav, -40, -20, dbunit=True)
+            # aug_wav = self.augment_center.frequence_shift(aug_wav)
+            # aug_wav = self.augment_center.fair_filed(aug_wav)
+            # aug_wav = self.augment_center.random_noise(aug_wav, -40, -20, dbunit=True)
             length = min(len(wav), len(aug_wav))
             aug_wavs[i,:length] = torch.from_numpy(aug_wav)[:length]
 
