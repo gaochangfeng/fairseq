@@ -8,3 +8,4 @@ from .wav2vec2 import *  # noqa
 from .wav2vec2_asr import *  # noqa
 from .fbank2vec2 import *  # noqa
 from .aug_wav2vec2 import *
+from .wav2vec2_teacher import *
